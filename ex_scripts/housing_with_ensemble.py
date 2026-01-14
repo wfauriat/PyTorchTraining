@@ -42,7 +42,7 @@ class HousePriceRegressor(nn.Module):
         return x.squeeze()
 
 # Train ensemble of models
-def train_ensemble(n_models=20, epochs=200, lr=0.01):
+def train_ensemble(n_models=20, epochs=100, lr=0.01):
     """
     Train an ensemble of models with different random initializations
     """
@@ -188,7 +188,8 @@ ax1.grid(True, alpha=0.3)
 
 # Plot 2: Individual model predictions vs ensemble mean
 ax2 = fig.add_subplot(gs[1, 0])
-sample_indices = np.argsort(y_test)[:10000:10]  # First 100 sorted samples
+# sample_indices = np.argsort(y_test)[:100]
+sample_indices = np.random.randint(0, y_test.shape[0], 100)
 for i, individual_pred in enumerate(individual_predictions):
     ax2.scatter(y_test[sample_indices], individual_pred[sample_indices], 
                alpha=0.3, s=10, label=f'Model {i+1}' if i < 3 else None)
@@ -204,7 +205,8 @@ ax2.grid(True, alpha=0.3)
 
 # Plot 3: Ensemble predictions with error bars
 ax3 = fig.add_subplot(gs[1, 1])
-indices = np.argsort(y_test)[:50]
+# indices = np.argsort(y_test)[:50]
+indices = np.random.randint(0, y_test.shape[0], 100)
 ax3.errorbar(y_test[indices], ensemble_mean[indices], 
             yerr=2*ensemble_std[indices],  # 2 std = ~95% confidence
             fmt='o', alpha=0.6, capsize=4, markersize=5, elinewidth=1.5)
@@ -232,7 +234,7 @@ ax4.grid(True, alpha=0.3)
 # Plot 5: Predictions colored by uncertainty
 ax5 = fig.add_subplot(gs[2, 0])
 scatter = ax5.scatter(y_test, ensemble_mean, c=ensemble_std, 
-                     cmap='viridis', alpha=0.6, s=20)
+                     cmap='plasma', alpha=0.6, s=20)
 ax5.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 
         'r--', linewidth=2)
 ax5.set_xlabel('True Price ($100k)')
