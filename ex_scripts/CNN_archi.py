@@ -9,43 +9,39 @@ class SimpleCNN(nn.Module):
     Architecture: Conv -> Pool -> Conv -> Pool -> FC -> FC -> Output
     """
     
-    def __init__(self, num_classes: int = 10):
+    def __init__(self, dimw: int = 32, num_classes: int = 10,
+                  num_channels: int = 3):
         super().__init__()
         
         # Convolutional layers
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(num_channels, dimw, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(dimw, dimw*2, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(dimw*2, dimw*4, kernel_size=3, padding=1)
         
         # Pooling
         self.pool = nn.MaxPool2d(2, 2)
         
-        # Fully connected layers
-        # After 3 pools of 2x2 on 32x32 input: 32 -> 16 -> 8 -> 4
-        self.fc1 = nn.Linear(128 * 4 * 4, 256)
-        self.fc2 = nn.Linear(256, num_classes)
+        # Calculate FC input size dynamically
+        # After 3 pools: dimension becomes input_size // (2^3) = input_size // 8
+        # CIFAR: 32 // 8 = 4
+        # MNIST: 28 // 8 = 3 (with truncation)
+        self.fc_input_size = dimw * 4 * (dimw // 8) * (dimw // 8)
         
-        # Dropout for regularization
+        # Fully connected layers
+        self.fc1 = nn.Linear(self.fc_input_size, dimw * 8)
+        self.fc2 = nn.Linear(dimw * 8, num_classes)
+        
+        # Dropout
         self.dropout = nn.Dropout(0.5)
     
     def forward(self, x):
-        # Conv block 1
-        x = self.pool(F.relu(self.conv1(x)))  # 32x32 -> 16x16
-        
-        # Conv block 2
-        x = self.pool(F.relu(self.conv2(x)))  # 16x16 -> 8x8
-        
-        # Conv block 3
-        x = self.pool(F.relu(self.conv3(x)))  # 8x8 -> 4x4
-        
-        # Flatten
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
         x = x.flatten(1)
-        
-        # Fully connected
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
-        
         return x
     
 

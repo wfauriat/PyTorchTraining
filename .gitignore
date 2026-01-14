@@ -31,3 +31,8 @@ coverage/
 
 # OS
 Thumbs.db
+
+#data
+data/
+
+*.pyc
