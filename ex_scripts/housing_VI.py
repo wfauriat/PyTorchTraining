@@ -97,6 +97,15 @@ model = BayesianNN(input_size=8, hidden_size=64, output_size=1)
 # Create variational guide (approximate posterior)
 guide = AutoDiagonalNormal(model)
 
+def count_model_params(input_size=8, hidden_size=64, output_size=1):
+    fc1 = (input_size * hidden_size) + hidden_size
+    fc2 = (hidden_size * (hidden_size // 2)) + (hidden_size // 2)
+    fc3 = ((hidden_size // 2) * output_size) + output_size
+    return fc1 + fc2 + fc3
+
+model_params = count_model_params(8, 64, 1)
+print(f"Model parameters (weights & biases): {model_params:,}")
+
 # Setup optimizer and inference algorithm
 adam = Adam({"lr": 0.01})
 svi = SVI(model, guide, adam, loss=Trace_ELBO())
