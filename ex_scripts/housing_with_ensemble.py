@@ -56,6 +56,11 @@ def train_ensemble(n_models=20, epochs=100, lr=0.01):
         print(f"\nTraining Model {model_idx + 1}/{n_models}")
         print("-" * 60)
         
+        n_samples = len(X_train)
+        bootstrap_indices = np.random.choice(n_samples, size=n_samples, replace=True)
+        X_train_boot = X_train[bootstrap_indices]
+        y_train_boot = y_train_tensor[bootstrap_indices]
+
         # Create new model with random initialization
         model = HousePriceRegressor()
         criterion = nn.MSELoss()
@@ -68,8 +73,8 @@ def train_ensemble(n_models=20, epochs=100, lr=0.01):
         model.train()
         for epoch in range(epochs):
             optimizer.zero_grad()
-            outputs = model(X_train)
-            loss = criterion(outputs, y_train_tensor)
+            outputs = model(X_train_boot)
+            loss = criterion(outputs, y_train_boot)
             loss.backward()
             optimizer.step()
             
@@ -86,37 +91,6 @@ def train_ensemble(n_models=20, epochs=100, lr=0.01):
     print("Ensemble training complete!")
     
     return models, train_histories
-
-# # Predict with ensemble
-# def predict_with_ensemble(models, X, scaler_y):
-#     """
-#     Get predictions and uncertainty from ensemble
-#     """
-#     predictions_scaled = []
-    
-#     for model in models:
-#         model.eval()
-#         with torch.no_grad():
-#             pred = model(X).numpy()
-#             predictions_scaled.append(pred)
-    
-#     predictions_scaled = np.array(predictions_scaled)  # Shape: [n_models, n_samples]
-    
-#     # Statistics in scaled space
-#     mean_scaled = predictions_scaled.mean(axis=0)
-#     std_scaled = predictions_scaled.std(axis=0)
-    
-#     # Transform back to original scale
-#     mean_pred = scaler_y.inverse_transform(mean_scaled.reshape(-1, 1)).flatten()
-#     std_pred = std_scaled * scaler_y.scale_[0]
-    
-#     # Also return individual predictions for visualization
-#     individual_preds = []
-#     for pred_scaled in predictions_scaled:
-#         pred = scaler_y.inverse_transform(pred_scaled.reshape(-1, 1)).flatten()
-#         individual_preds.append(pred)
-    
-#     return mean_pred, std_pred, individual_preds
 
 def predict_with_ensemble(models, X, scaler_y):
     """
@@ -205,8 +179,12 @@ ax2.grid(True, alpha=0.3)
 
 # Plot 3: Ensemble predictions with error bars
 ax3 = fig.add_subplot(gs[1, 1])
+
+random_indices = np.random.choice(len(y_test), size=50, replace=False)
+indices = random_indices[np.argsort(y_test[random_indices])]
+
 # indices = np.argsort(y_test)[:50]
-indices = np.random.randint(0, y_test.shape[0], 100)
+# indices = np.random.randint(0, y_test.shape[0], 100)
 ax3.errorbar(y_test[indices], ensemble_mean[indices], 
             yerr=2*ensemble_std[indices],  # 2 std = ~95% confidence
             fmt='o', alpha=0.6, capsize=4, markersize=5, elinewidth=1.5)
