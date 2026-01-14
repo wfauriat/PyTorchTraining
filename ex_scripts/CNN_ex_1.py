@@ -218,9 +218,9 @@ if sel_case == "MNIST":
 # model = ResNet18(num_classes=10).to(device)
 
 criterion = nn.CrossEntropyLoss()
-# optimizer = torch.optim.SGD(model.parameters(),
-#                              lr=0.1, momentum=0.9, weight_decay=5e-4)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.SGD(model.parameters(),
+                             lr=0.1, momentum=0.9, weight_decay=5e-4)
+# optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
 
 # Training history
